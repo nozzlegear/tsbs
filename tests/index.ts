@@ -1,5 +1,5 @@
 // Until actual tests are implemented, this file just details the intended tool usage
-declare const Task: any;
+import { Task } from "../";
 
 Task.create("Clean", () => {
     // Tool should have a built-in way to clean directories
