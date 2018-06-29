@@ -8,6 +8,10 @@
   "author": "Joshua Harms <joshua@nozzlegear.com>",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "build": "tsc --pretty",
+    "prepublishOnly": "npm run build"
+  },
   "devDependencies": {
     "typescript": "^2.9.2"
   },
