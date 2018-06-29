@@ -1,5 +1,5 @@
 // Until actual tests are implemented, this file just details the intended tool usage
-import { Task } from "../";
+import { Task } from "../src";
 
 Task.create("Clean", () => {
     // Tool should have a built-in way to clean directories
