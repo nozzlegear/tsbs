@@ -15,5 +15,12 @@
   "devDependencies": {
     "typescript": "^2.9.2"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "files": [
+    "LICENSE",
+    "README.md",
+    "package.json",
+    "tsconfig.json",
+    "lib"
+  ]
 }
