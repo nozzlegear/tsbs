@@ -2,3 +2,5 @@ node_modules
 *.js
 lib
 bin
+*.log
+*.tgz
