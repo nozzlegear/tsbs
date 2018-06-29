@@ -1,0 +1,13 @@
+{
+  "name": "tsbs",
+  "version": "0.1.0",
+  "description": "TypeScript Build System",
+  "main": "src/index.ts",
+  "repository": "https://github.com/nozzlegear/tsbs",
+  "author": "Joshua Harms <joshua@nozzlegear.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "typescript": "^2.9.2"
+  }
+}
