@@ -1,6 +1,6 @@
 # TSBS, the TypeScript Build System
 
-This project was inspired by [FAKE (F# Make)](http://fake.build/index.html). I wanted a way to create arbitrary build tasks that would run pure TypeScript (or JavaScript), rather than relying on NPM's garbage package.json scripts. Gulp comes close to what I want, but specifying and running dependencies (tasks that depend on other tasks) is unintuitive.
+This project was inspired by [FAKE (F# Make)](http://fake.build/index.html). I wanted a way to create arbitrary build tasks that would run pure TypeScript (or JavaScript), rather than relying on NPM's garbage package.json scripts. Gulp comes close to what I want, but specifying and running dependencies (tasks that depend on other tasks) is unintuitive, and the piping unnecessary.
 
 This is an alpha project at the moment; the intended usage looks something like this:
 
