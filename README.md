@@ -1,6 +1,22 @@
 # TSBS, the TypeScript Build System
 
-This project was inspired by [FAKE (F# Make)](http://fake.build/index.html). I wanted a way to create arbitrary build tasks that would run pure TypeScript (or JavaScript), rather than relying on NPM's garbage package.json scripts. Gulp comes close to what I want, but specifying and running dependencies (tasks that depend on other tasks) is unintuitive, and the piping unnecessary.
+This project was inspired by [FAKE (F# Make)](http://fake.build/index.html). I wanted a way to create arbitrary build tasks that would run pure TypeScript (or JavaScript), rather than relying on NPM's garbage package.json scripts. Gulp comes close to what I want, but specifying and running dependencies (tasks that depend on other tasks) is unintuitive, creating "soft dependency task groups"[1] can't be done (easily) without a third-party package, and the piping is difficult to reason about.
+
+With that said, this project is *not* meant to compete with any other build system. There may be identical or even better tools out there. It's just meant to scratch my own itch and perhaps be useful to other developers.
+
+[1] "soft dependency" task group: a group of tasks that don't depend on each other, but do depend on all previously specified tasks, and further tasks depend on every task in the "soft dependency". For example, consider this group of tasks:
+
+```ts
+[
+    "Clean",
+    ["Build:Client", "Build:Server"],
+    "Publish"
+]
+```
+
+The tasks `"Build:Client"` and `"Build:Server"` are soft dependencies. Running `"Build:Client"` would run `"Clean" => "Build:Client"` but wouldn't run `"Build:Server"` at all. However, running task `"Publish"` would run `"Clean" => "Build:Client" => "Build:Server" => "Publish"`.
+
+## Usage
 
 This is an alpha project at the moment; the intended usage looks something like this:
 
