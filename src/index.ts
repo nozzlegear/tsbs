@@ -1,15 +1,7 @@
-export type TaskHandler = 
-    () => void 
-    | (() => Promise<void>)
+import { taskBuilder } from "./taskBuilder"
 
-export const Task = {
-    create: (name: string, handler: TaskHandler) => {
-        console.log("This version of TSBS is not functional.", {name, handler})
-    },
-    dependencies: (list: (string | string[])[]) => {
-        console.log("This version of TSBS is not functional.", {list})
-    },
-    doNothing: (...args: any[]) => {
-        console.log("This version of TSBS is not functional.", {args})
-    }
-};
+export * from "./taskBuilder"
+export * from "./dependencies"
+export * from "./taskHandler"
+
+export default taskBuilder;
