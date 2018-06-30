@@ -70,5 +70,5 @@ const runTaskOrDefault = TaskBuilder((Task) => {
     ])
 })
 
-// Run whichever task was given to the CLI. If not ask was given, run the "Clean" task instead.
+// Run whichever task was given to the CLI. If no task was given, run the "Clean" task instead.
 runTaskOrDefault("Clean")
