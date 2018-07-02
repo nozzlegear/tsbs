@@ -85,6 +85,8 @@ export const dependencies: AddDependenciesFunction = (dependencyList) => {
         }
 
         if (Array.isArray(task)) {
+            // TODO: Group dependencies should only depend on unique tasks not defined in this `RawDependencyGroup`
+            // but the group itself will depend on the next Dependency, just like a `SingleDependency` does.
             const output: GroupDependency = {
                 members: task.map<SingleDependency>(name => ({
                     name,
@@ -110,7 +112,7 @@ export const dependencies: AddDependenciesFunction = (dependencyList) => {
     const mappedDeps = dependencyList.reduce((state, depGroup) => {
         // Our depGroup is one single array of either task names (strings) or soft dependency task groups (string arrays). 
         // Since the head of a dependency group is the start, we want to reverse the array and work from tail => head. 
-        const dependency = mapDependency(depGroup)
+        const dependency = mapDependency(depGroup.reverse())
 
         return dependency === undefined ? state : [...state, dependency]
     }, [] as Dependency[])
