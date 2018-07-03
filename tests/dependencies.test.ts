@@ -6,6 +6,17 @@ test("Calculates dependencies", () => {
             "Clean",
             ["Build:Server", "Build:Client"],
             "Build"
+        ],
+        [
+            "Build",
+            "Publish"
+        ],
+        [
+            // Reassigning a task will clear its previous dependencies, as we have no idea where the 
+            // new task should fit in with the old task. In this case, we reassign "Build" to be dependent on 
+            // "Some:Task" and "Some:OtherTask".
+            ["Some:Task", "Some:OtherTask"],
+            "Build"
         ]
     ])
 

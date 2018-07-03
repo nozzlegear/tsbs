@@ -2,120 +2,93 @@ export type RawDependencyGroup = (string | string[]) []
 
 export type RawDependencies = RawDependencyGroup []
 
-export type AddDependenciesFunction = (dependencyList: RawDependencies) => Dependency[];
+export type AddDependenciesFunction = (dependencyList: RawDependencies) => TaskList;
 
-type Dependency = SingleDependency | GroupDependency
+type TaskName = string
 
-export interface SingleDependency {
-    type: "single"
-    name: string 
-    dependsOn: Dependency | undefined
+type Task = {
+    name: TaskName
+    dependsOn: TaskName[]
 }
 
-export interface GroupDependency {
-    type: "group"
-    members: Dependency[]
-}
+export type TaskList = Task []
 
-function isSingle(obj: Dependency): obj is SingleDependency {
-    return obj.type === "single"
-}
+export function getNextDependencies(atPosition: number, list: RawDependencyGroup): string[] {
+    const nextDependencySlice = list.slice(atPosition, atPosition + 1)
 
-function isGroup(obj: Dependency): obj is GroupDependency {
-    return obj.type === "group"
-}
-
-export type DependencyList = Dependency []
-
-export const dependencies: AddDependenciesFunction = (dependencyList) => {
-    console.log({dependencyList})
-
-    // TODO: Take the dependency list and determine which tasks depend on which. 
-    // The algorithm used for this is a linked list.
-    // First, we'll take each task individually and turn it into a Dependency object. 
-    // Second, we'll go through the original dependency list and determine which task is its parent. 
-    // Using an F#-style recursive function, we'll continue up the chain and then find that task's parent until the final task has no parents. 
-    // A dependency will look something like this:
-    // {
-    //     name: "Build",
-    //     dependsOn: [
-    //         {
-    //             name: "Build:Client",
-    //             dependsOn: [
-    //                 {
-    //                     name: "Restore",
-    //                     dependsOn: [
-    //                         {
-    //                             name: "Clean",
-    //                             dependsOn: []
-    //                         }
-    //                     ]
-    //                 }
-    //             ]
-    //         },
-    //         {
-    //             name: "Build:Server",
-    //             dependsOn: [
-    //                 {
-    //                     name: "Restore",
-    //                     dependsOn: [
-    //                         {
-    //                             name: "Clean",
-    //                             dependsOn: []
-    //                         }
-    //                     ]
-    //                 }
-    //             ]
-    //         }
-    //     ]
-    // }
-
-    function mapDependency(rawDependencies: RawDependencyGroup): Dependency | undefined {
-        if (rawDependencies.length === 0) {
-            // We've reached the end of the list
-            return undefined;
-        }
-
-        const deps = rawDependencies.slice()
-        const task = deps.shift()
-
-        if (task === undefined) {
-            // A bad entry in the list
-            return undefined
-        }
-
-        if (Array.isArray(task)) {
-            // TODO: Group dependencies should only depend on unique tasks not defined in this `RawDependencyGroup`
-            // but the group itself will depend on the next Dependency, just like a `SingleDependency` does.
-            const output: GroupDependency = {
-                members: task.map<SingleDependency>(name => ({
-                    name,
-                    type: "single",
-                    dependsOn: mapDependency(deps)
-                })),
-                type: "group"
-            }
-
-            return output
-        } else {
-            const output: SingleDependency = {
-                type: "single",
-                name: task,
-                dependsOn: mapDependency(deps)
-            }
-
-            return output;
-        }
+    if (nextDependencySlice.length === 0) {
+        return []
     }
 
-    // The dependency list is an array of arrays. We want to map each array to a single `Dependency` type (which itself is a linked list). 
-    const mappedDeps = dependencyList.reduce((state, depGroup) => {
+    const nextDependency = nextDependencySlice[0]
+
+    return Array.isArray(nextDependency) ? nextDependency : [nextDependency] 
+}
+
+export function mapTasks(rawDependencies: RawDependencyGroup): Task[] {
+    return rawDependencies.reduce<Task []>((state, task, index, list) => {
+        const dependsOn = getNextDependencies(index + 1, list);
+
+        if (Array.isArray(task)) {
+            const tasks = task.map<Task>(name => ({
+                name,
+                dependsOn
+            }))
+
+            return [
+                ...state,
+                ...tasks
+            ]   
+        } else {
+            const output: Task = {
+                name: task,
+                dependsOn
+            }
+
+            return [
+                ...state,
+                output
+            ]
+        }
+    }, [])
+}
+
+export const dependencies: AddDependenciesFunction = (dependencyList) => {
+    // Reduce dependencies into a flat linked list, where each link just contains a reference to its dependency, but not the dependency itself. 
+    // Instead all tasks are stored in a flat array and we can just reduce over it to build the final task list.
+    // [
+    //     {
+    //         taskName: "Build",
+    //         dependsOn: ["Build:Client", "Build:Server"]
+    //     },
+    //     {
+    //         taskName: "Build:Client",
+    //         dependsOn: ["Clean"]
+    //     },
+    //     {
+    //         taskName: "Build:Server",
+    //         dependsOn: ["Clean"]
+    //     },
+    //     {
+    //         taskName: "Clean",
+    //         dependsOn: []
+    //     }
+    // ]
+
+    // The dependency list is an array of arrays. We want to map each inner array to a single `Task` type. 
+    // Since the head of the dependency group is the start, we want to reverse the array and work from the tail => head to determine which 
+    // tasks a single task depends on.
+    const tasks = dependencyList.reverse().reduce<Task []>((state, depGroup) => {
         // Our depGroup is one single array of either task names (strings) or soft dependency task groups (string arrays). 
-        // Since the head of a dependency group is the start, we want to reverse the array and work from tail => head. 
-        const dependency = mapDependency(depGroup.reverse())
+        // Again, we want to reverse the array of tasks and work from tail => head
+        const newTasks = mapTasks(depGroup.reverse());
 
-        return dependency === undefined ? state : [...state, dependency]
-    }, [] as Dependency[])
+        // If the mapped tasks contain any tasks that are already present in the state, we need to discard them before merging into the 
+        // state, as their dependency was changed to whatever is already present in the list (remember that we're traversing the dependency list from bottom to top). 
+        const filteredNewTasks = newTasks.filter(newTask => !state.some(stateTask => stateTask.name === newTask.name));
 
-    return mappedDeps
+        return [...state, ...filteredNewTasks]
+    }, [])
+
+    return tasks
 }
