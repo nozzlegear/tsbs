@@ -9,7 +9,7 @@ test("Calculates dependencies", () => {
         ]
     ])
     
-    expect(graph.length === 4)
+    expect(graph).toHaveLength(4)
 
     graph.forEach(task => {
         switch (task.name) {
@@ -19,24 +19,31 @@ test("Calculates dependencies", () => {
         
             case "Build:Server":
                 expect(task.dependsOn).toHaveLength(1)
-                expect(task.dependsOn[0]).toBe("Clean")
+                expect(task.dependsOn).toContainEqual("Clean")
                 break;
                 
             case "Build:Client":
                 expect(task.dependsOn).toHaveLength(1)
-                expect(task.dependsOn[0]).toBe("Clean")
+                expect(task.dependsOn).toContainEqual("Clean")
                 break;
                 
             case "Build":
                 expect(task.dependsOn).toHaveLength(2)
-                expect(task.dependsOn[0]).toBe("Build:Server")
-                expect(task.dependsOn[1]).toBe("Build:Client")
+                expect(task.dependsOn).toContainEqual("Build:Server")
+                expect(task.dependsOn).toContainEqual("Build:Client")
                 break;
+
+            default:
+                throw new Error(`Unexpected task name ${task.name}`);
         }
     })
 });
 
 test("Calculates multiple dependency groups", () => {
+    // Starting the second group off with a task that already has a dependency should NOT clear those dependencies.
+    // This is just a way for the user to specify that this task is the parent task of another, although technically
+    // they should have put the next dependent task in the first group (unless the parent task was in a soft dependency group,
+    // in which case it makes sense to specify in another array :)
     const graph = dependencies([
         [
             "Clean",
@@ -48,11 +55,28 @@ test("Calculates multiple dependency groups", () => {
         ]
     ])
 
-    // Starting the second group off with a task that already has a dependency should NOT clear those dependencies.
-    // This is just a way for the user to specify that this task is the parent task of another, although technically
-    // they should have put the next dependent task in the first group (unless the parent task was in a soft dependency group,
-    // in which case it makes sense to specify in another array :)
-    console.log(JSON.stringify(graph, null, 4))
+    expect(graph).toHaveLength(3)
+
+    graph.forEach(task => {
+        switch (task.name) {
+            case "Clean":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            case "Build":
+                expect(task.dependsOn).toHaveLength(1)
+                expect(task.dependsOn).toContainEqual("Clean")
+                break;
+
+            case "Publish":
+                expect(task.dependsOn).toHaveLength(1)
+                expect(task.dependsOn).toContainEqual("Build")
+                break;
+
+            default:
+                throw new Error(`Unexpected task name ${task.name}`)
+        }
+    })
 })
 
 test("Calculates dependencies that start with a soft dependency group", () => {
@@ -67,11 +91,38 @@ test("Calculates dependencies that start with a soft dependency group", () => {
         ]
     ])
 
-    // Starting the second group off with a task that already has a dependency should NOT clear those dependencies.
-    // This is just a way for the user to specify that this task is the parent task of another, although technically
-    // they should have put the next dependent task in the first group (unless the parent task was in a soft dependency group,
-    // in which case it makes sense to specify in another array :)
-    console.log(JSON.stringify(graph, null, 4))
+    expect(graph).toHaveLength(5)
+
+    graph.forEach(task => {
+        switch (task.name) {
+            case "Restore:Client":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            case "Restore:Server":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            case "Restore":
+                expect(task.dependsOn).toHaveLength(2)
+                expect(task.dependsOn).toContainEqual("Restore:Client")
+                expect(task.dependsOn).toContainEqual("Restore:Server")
+                break;
+
+            case "Clean":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            case "Build":
+                expect(task.dependsOn).toHaveLength(2)
+                expect(task.dependsOn).toContainEqual("Restore")
+                expect(task.dependsOn).toContainEqual("Clean")
+                break;
+
+            default:
+                throw new Error(`Unexpected task name ${task.name}`)
+        }
+    })
 })
 
 test("Reassigns dependencies", () => {
@@ -90,15 +141,35 @@ test("Reassigns dependencies", () => {
     ])
 
     expect(graph).toHaveLength(3)
+
+    graph.forEach(task => {
+        switch (task.name) {
+            case "Clean":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            case "Build":
+                expect(task.dependsOn).toHaveLength(1)
+                expect(task.dependsOn).toContainEqual("Restore")
+                break;
+
+            case "Restore":
+                expect(task.dependsOn).toHaveLength(0)
+                break;
+
+            default:
+                throw new Error(`Unexpected task name ${task.name}`)
+        }
+    })
 })
 
-test("Cyclical dependencies should throw an error", () => {
+test.skip("Cyclical dependencies should throw an error", () => {
     expect(() => {
         dependencies([
             [
                 "Clean",
                 "Build",
-                "Clean"
+                "Clean",
             ]
         ])
     }).toThrow()
