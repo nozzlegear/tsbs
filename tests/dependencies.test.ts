@@ -12,7 +12,6 @@ test("Calculates dependencies", () => {
     expect(graph.length === 4)
 
     graph.forEach(task => {
-        console.log("Checking task", task);
         switch (task.name) {
             case "Clean":
                 expect(task.dependsOn).toHaveLength(0)
@@ -91,4 +90,16 @@ test("Reassigns dependencies", () => {
     ])
 
     expect(graph).toHaveLength(3)
+})
+
+test("Cyclical dependencies should throw an error", () => {
+    expect(() => {
+        dependencies([
+            [
+                "Clean",
+                "Build",
+                "Clean"
+            ]
+        ])
+    }).toThrow()
 })
