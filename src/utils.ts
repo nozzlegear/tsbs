@@ -13,3 +13,17 @@ export function findIndexOf<T>(predicate: (item: T) => boolean, list: T[]): numb
 
     return -1
 }
+
+export function tryFind<T>(predicate: (item: T) => boolean, list: T[]): Option<T> {
+    const index = findIndexOf(predicate, list)
+
+    return index === -1 ? Option.none() : Option.some(list[index])
+}
+
+export function tryHead<T>(list: T[]): Option<T> {
+    return list.length > 0 ? Option.some(list[0]) : Option.none()
+}
+
+export function tryTail<T>(list: T[]): Option<T> {
+    return list.length > 0 ? Option.some(list[list.length - 1]) : Option.none()
+}

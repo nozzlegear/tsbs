@@ -163,7 +163,9 @@ test("Reassigns dependencies", () => {
     })
 })
 
-test.skip("Cyclical dependencies should throw an error", () => {
+test("Cyclical dependencies should throw an error", () => {
+    // TSBS does not support cyclical dependencies. Build cannot depend on Clean which depends on Build. 
+    // An error should be thrown.
     expect(() => {
         dependencies([
             [

@@ -1,7 +1,6 @@
-import { taskBuilder } from "./taskBuilder"
+import { taskBuilder } from "./tasks"
 
-export * from "./taskBuilder"
+export * from "./tasks"
 export * from "./dependencies"
-export * from "./taskHandler"
 
 export default taskBuilder;
