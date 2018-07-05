@@ -1,4 +1,4 @@
-import { dependencies } from "../src"
+import { dependencies, getTaskExecutionOrder, CyclicalDependencyError } from "../src"
 
 test("Calculates dependencies", () => {
     const graph = dependencies([
@@ -166,7 +166,7 @@ test("Reassigns dependencies", () => {
 test("Cyclical dependencies should throw an error", () => {
     // TSBS does not support cyclical dependencies. Build cannot depend on Clean which depends on Build. 
     // An error should be thrown.
-    expect(() => {
+    // expect(() => {
         dependencies([
             [
                 "Clean",
@@ -174,5 +174,17 @@ test("Cyclical dependencies should throw an error", () => {
                 "Clean",
             ]
         ])
-    }).toThrow()
+    // }).toThrow()
+})
+
+test("Gets task execution order", () => {
+    expect (() => {
+        getTaskExecutionOrder("Clean", dependencies([
+            [
+                "Clean",
+                "Build",
+                "Clean"
+            ]
+        ]))
+    }).toThrowError(new CyclicalDependencyError(["Clean", "Build", "Clean"]))
 })

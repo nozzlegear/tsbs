@@ -1,5 +1,7 @@
 import { dependencies } from ".";
-import { tryFind } from "./utils";
+import { tryFind, contains, accumulate } from "./utils";
+import { Option } from "./option"
+import { findCyclicalDependencies } from "./dependencies";
 
 export type TaskName = string
 
@@ -37,24 +39,33 @@ export function taskBuilder(configure: (builder: typeof TaskBuilder) => Task[]):
     }
 }
 
-/**
- * Determines the execution order of tasks, starting with the given task name.
- */
-export function getTaskExecutionOrder(taskName: string, list: Task[]): Task[] {
-    const firstTask = tryFind(task => task.name === taskName, list)
+export interface LinkedTask {
+    name: TaskName 
+    next: LinkedTask[]
+}
 
-    if (Option.isNone(firstTask)) {
+/**
+ * Determines the execution order of tasks, starting with the given task name, and returns a linked list of tasks.
+ */
+export function getTaskExecutionOrder(taskName: string, list: Task[]): LinkedTask {
+    // Find the task matching the task name
+    const findResult = tryFind(task => task.name === taskName, list)
+
+    if (Option.isNone(findResult)) {
         throw new Error(`Task ${taskName} does not appear in the list of task dependencies.`)
     }
-    
-    let nextTasks: Task[] = Option.get(firstTask).dependencies
-    let executionOrder: Task[] = [Option.get(currentTask)]
 
-    // Iterate over the list of tasks, pushing to the output
-    while (currentTask.dependsOn.length > 0) {
-        // Find the dependencies for the current task
+    const task: Task = Option.get(findResult)
 
+    return {
+        name: task.name,
+        next: task.dependsOn.map(nextTaskName => {
+            const next = getTaskExecutionOrder(nextTaskName, list)
+
+            // Check if adding this task would create a cyclical dependency.
+            findCyclicalDependencies(getTaskExecutionOrder(nextTaskName, list))
+
+            return next
+        })
     }
-
-    return []
 }

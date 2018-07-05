@@ -1,19 +1,41 @@
-import { findIndexOf } from "./utils";
-import { Task, getTaskExecutionOrder } from ".";
+import { findIndexOf, contains } from "./utils";
+import { Task, LinkedTask } from ".";
 
 export type RawDependencyGroup = (string | string[]) []
 
 export type RawDependencies = RawDependencyGroup []
 
-export type CyclicalDependency = {
-    task: Task
-    dependsOn: CyclicalDependency
+export class CyclicalDependencyError extends Error {
+    constructor(public taskNames: string[]) {
+        super("Cyclical dependency detected.")
+    }
+
+    report = () => {
+        // TODO: Report the cyclical dependencies
+        return ""
+    }
 }
 
-export function findCyclicalDependencies(taskName: string, tasks: Task[]): CyclicalDependency | undefined {
-    const executionOrder = getTaskExecutionOrder(taskName, tasks);
+/**
+ * Checks a `LinkedTask` for cyclical dependencies, throwing a `CyclicalDependencyError` if one is detected.
+ */
+export function findCyclicalDependencies(task: LinkedTask): void {
+    // Navigate the tree to find cyclical dependencies. A task is cyclical if its name appears more than once in a LinkedTask.
+    function check(task: LinkedTask, seen: string[]) {
+        if (contains([task.name], seen)) {
+            // Trim the seen list down to just the cyclical tasks and those in between them
+            const startIndex = findIndexOf(seen => seen === task.name, seen)
 
-    return undefined
+            throw new CyclicalDependencyError([
+                ...seen.slice(startIndex),
+                task.name
+            ])
+        }
+
+        task.next.forEach(task => check(task, [...seen, task.name]))
+    }
+
+    task.next.forEach(task => check(task, []))
 }
 
 /**
@@ -119,15 +141,6 @@ export function dependencies (dependencyList: RawDependencies): Task[] {
 
             return output
         }, [])
-
-    // Finally, check each task for cyclical dependencies and throw an error when detected.
-    tasks.forEach((task, _, tasks) =>{
-        const cyclicalDependency = findCyclicalDependencies(task.name, tasks)
-
-        if (cyclicalDependency !== undefined) {
-            throw new Error(`Cyclical dependency detected: GRAPH HERE`)
-        }
-    })
 
     return tasks
 }
