@@ -1,8 +1,6 @@
-export type Option<T> = 
-    | Some<T>
-    | None
-export type Some<T> = T
-export type None = null | undefined
+export type Option<T> = Some<T> | None;
+export type Some<T> = T;
+export type None = null | undefined;
 
 // export class Option<T> {
 //     constructor(private value?: T | None) {
@@ -21,7 +19,7 @@ export type None = null | undefined
 //         const t = new Option("test")
 
 //         if (Option.isNone(t)) {
-            
+
 //         }
 
 //         return false
@@ -32,51 +30,54 @@ export type None = null | undefined
 //     }
 // }
 
-export module Option {
+export namespace Option {
     export function isNone(option: Option<any>): option is None {
-        return option === null || option === undefined
+        return option === null || option === undefined;
     }
 
     export function isSome<T>(option: Option<T>): option is Some<T> {
-        return !isNone(option)
+        return !isNone(option);
     }
 
     export function wrap<T>(value: T | None): Option<T> {
         // Default wrapped options to null rather than undefined
-        return value === undefined ? null : value
+        return value === undefined ? null : value;
     }
 
     export function of<T>(value: T | None): Option<T> {
-        return wrap(value)
+        return wrap(value);
     }
 
     export function some<T>(value: T | None): Option<T> {
-        return wrap(value)
+        return wrap(value);
     }
 
     export function none(): Option<None> {
-        return null
+        return null;
     }
 
     export function get<T>(option: Option<T>): T {
         if (Option.isNone(option)) {
-            throw new Error(`Could not get option value. Option was None.`)
+            throw new Error(`Could not get option value. Option was None.`);
         }
 
-        return option
+        return option;
     }
 
-    export function map<Input, Output>(fn: (value: Input) => Output, option: Option<Input>): Option<Output> {
+    export function map<Input, Output>(
+        fn: (value: Input) => Output,
+        option: Option<Input>
+    ): Option<Output> {
         if (Option.isSome(option)) {
-            return fn(Option.get(option))
+            return fn(Option.get(option));
         }
 
-        return option
+        return option;
     }
 
     export function iter<T>(fn: (value: T) => void, option: Option<T>): void {
         if (Option.isSome(option)) {
-            fn(Option.get(option))
+            fn(Option.get(option));
         }
     }
 }
