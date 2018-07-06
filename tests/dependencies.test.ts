@@ -1,8 +1,9 @@
 import {
     dependencies,
-    getTaskExecutionOrder,
+    linkTaskExecutionChain,
     CyclicalDependencyError
 } from "../src";
+import { EOL } from "os";
 
 test("Calculates dependencies", () => {
     const graph = dependencies([
@@ -148,18 +149,29 @@ test("Reassigns dependencies", () => {
 test("Cyclical dependencies should throw an error", () => {
     // TSBS does not support cyclical dependencies. Build cannot depend on Clean which depends on Build.
     // An error should be thrown.
-    // expect(() => {
-    dependencies([["Clean", "Build", "Clean"]]);
-    // }).toThrow()
+    const err = new CyclicalDependencyError("Clean", [
+        "Clean",
+        "Build",
+        "Clean"
+    ]);
+
+    expect(() => {
+        dependencies([["Clean", "Build", "Clean"]]);
+    }).toThrowError(err);
 });
 
-test("Gets task execution order", () => {
-    // TODO: Use the same sort of recursive function that `findCyclicalDependencies` uses on `Task[]` instead of `LinkedTask`.
-    // Or turn the `getTaskExecutionOrder` function into the same kind of recursive function that maintains a list of task names.
-    expect(() => {
-        getTaskExecutionOrder(
-            "Clean",
-            dependencies([["Clean", "Build", "Clean"]])
-        );
-    }).toThrowError(new CyclicalDependencyError(["Clean", "Build", "Clean"]));
+test("CyclicalDependencyError formats its message correctly", () => {
+    const err = new CyclicalDependencyError("Clean", [
+        "Clean",
+        "Restore",
+        "Clean"
+    ]);
+    const expectedMessage = `Cyclical dependency detected: task "Clean" depends on itself.${EOL +
+        EOL}Clean${EOL}  <== Restore${EOL}  <== Clean`;
+
+    expect(err.message).toEqual(expectedMessage);
+    expect(err.report()).toEqual(expectedMessage);
+    expect(
+        CyclicalDependencyError.report(err.cyclicalTaskName, err.taskNames)
+    ).toEqual(expectedMessage);
 });

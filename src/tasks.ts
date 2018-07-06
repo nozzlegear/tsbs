@@ -47,7 +47,7 @@ export interface LinkedTask {
 /**
  * Determines the execution order of tasks, starting with the given task name, and returns a linked list of tasks.
  */
-export function getTaskExecutionOrder(
+export function linkTaskExecutionChain(
     taskName: string,
     list: Task[]
 ): LinkedTask {
@@ -60,17 +60,14 @@ export function getTaskExecutionOrder(
         );
     }
 
+    findCyclicalDependencies(list);
+
     const task: Task = Option.get(findResult);
 
     return {
         name: task.name,
-        next: task.dependsOn.map(nextTaskName => {
-            const next = getTaskExecutionOrder(nextTaskName, list);
-
-            // Check if adding this task would create a cyclical dependency.
-            findCyclicalDependencies(getTaskExecutionOrder(nextTaskName, list));
-
-            return next;
-        })
+        next: task.dependsOn.map(nextTaskName =>
+            linkTaskExecutionChain(nextTaskName, list)
+        )
     };
 }

@@ -1,41 +1,70 @@
-import { findIndexOf, contains } from "./utils";
-import { Task, LinkedTask } from ".";
+import { findIndexOf, tryFind } from "./utils";
+import { Task } from ".";
+import { Option } from "./option";
+import { EOL } from "os";
 
 export type RawDependencyGroup = (string | string[])[];
 
 export type RawDependencies = RawDependencyGroup[];
 
 export class CyclicalDependencyError extends Error {
-    constructor(public taskNames: string[]) {
-        super("Cyclical dependency detected.");
+    constructor(public cyclicalTaskName: string, public taskNames: string[]) {
+        super();
+        this.message = CyclicalDependencyError.report(
+            cyclicalTaskName,
+            taskNames
+        );
     }
 
-    report = () => {
-        // TODO: Report the cyclical dependencies
-        return "";
+    /**
+     * Formats and reports the order of cyclical dependencies.
+     */
+    report = () =>
+        CyclicalDependencyError.report(this.cyclicalTaskName, this.taskNames);
+
+    /**
+     * Formats and reports the order of cyclical dependencies.
+     */
+    static report = (cyclicalTaskName: string, cyclicalTasks: string[]) => {
+        const taskOrder = cyclicalTasks
+            .map((name, index) => (index === 0 ? name : `  <== ${name}`))
+            .join(EOL);
+
+        return `Cyclical dependency detected: task "${cyclicalTaskName}" depends on itself.${EOL +
+            EOL}${taskOrder}`;
     };
 }
 
 /**
- * Checks a `LinkedTask` for cyclical dependencies, throwing a `CyclicalDependencyError` if one is detected.
+ * Checks a list of `Task` for cyclical dependencies, throwing a `CyclicalDependencyError` if one is detected.
  */
-export function findCyclicalDependencies(task: LinkedTask): void {
+export function findCyclicalDependencies(tasks: Task[]): void {
     // Navigate the tree to find cyclical dependencies. A task is cyclical if its name appears more than once in a LinkedTask.
-    function check(task: LinkedTask, seen: string[]) {
-        if (contains([task.name], seen)) {
-            // Trim the seen list down to just the cyclical tasks and those in between them
-            const startIndex = findIndexOf(seen => seen === task.name, seen);
+    function check(taskName: string, seen: string[]) {
+        const seenIndex = seen.indexOf(taskName);
 
-            throw new CyclicalDependencyError([
-                ...seen.slice(startIndex),
-                task.name
-            ]);
+        if (seenIndex > -1) {
+            // Trim the seen list down to just the cyclical tasks and those in between them
+            const cyclicalTasks = [...seen.slice(seenIndex), taskName];
+
+            throw new CyclicalDependencyError(taskName, cyclicalTasks);
         }
 
-        task.next.forEach(task => check(task, [...seen, task.name]));
+        // Find the task
+        const findResult = tryFind(t => t.name === taskName, tasks);
+
+        if (Option.isNone(findResult)) {
+            throw new Error(
+                `Task ${taskName} does not appear in the list of tasks.`
+            );
+        }
+
+        const task = Option.get(findResult);
+
+        task.dependsOn.forEach(task => check(task, [...seen, taskName]));
     }
 
-    task.next.forEach(task => check(task, []));
+    tasks.forEach(task => check(task.name, []));
 }
 
 /**
@@ -151,6 +180,9 @@ export function dependencies(dependencyList: RawDependencies): Task[] {
 
                 return output;
             }, []);
+
+    // Finally, check each task for cyclical dependencies
+    findCyclicalDependencies(tasks);
 
     return tasks;
 }
