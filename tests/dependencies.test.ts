@@ -175,3 +175,12 @@ test("CyclicalDependencyError formats its message correctly", () => {
         CyclicalDependencyError.report(err.cyclicalTaskName, err.taskNames)
     ).toEqual(expectedMessage);
 });
+
+test("Should not throw a CyclicalDependencyError when adding a task twice just to add dependencies to it", () => {
+    expect(() => {
+        dependencies([
+            ["Clean", ["Build:Server", "Build:Client"], ["Build", "All"]],
+            ["Build", "Publish"]
+        ]);
+    }).not.toThrow();
+});
