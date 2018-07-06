@@ -16,18 +16,22 @@ export function createTask(taskName: string, handler: TaskHandler) {
     console.log({ taskName, handler });
 }
 
-const TaskBuilder = {
-    create: createTask,
-    dependencies,
-    doNothing: (..._: any[]) => {}
-};
+export interface TaskBuilder {
+    create: typeof createTask;
+    dependencies: typeof dependencies;
+    doNothing: (...args: any[]) => {};
+}
 
 export type RunFunction = (defaultTaskName: string) => void;
 
 export function taskBuilder(
-    configure: (builder: typeof TaskBuilder) => Task[]
+    configure: (builder: TaskBuilder) => Task[]
 ): RunFunction {
-    const taskList = configure(TaskBuilder);
+    const taskList = configure({
+        create: createTask,
+        dependencies,
+        doNothing: (..._: any[]) => ({})
+    });
 
     console.log({ taskList });
 
