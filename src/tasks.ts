@@ -19,7 +19,7 @@ export function createTask(taskName: string, handler: TaskHandler) {
 export interface TaskBuilder {
     create: typeof createTask;
     dependencies: typeof dependencies;
-    doNothing: (...args: any[]) => {};
+    doNothing: (...args: any[]) => void;
 }
 
 export type RunFunction = (defaultTaskName: string) => void;
@@ -30,7 +30,7 @@ export function taskBuilder(
     const taskList = configure({
         create: createTask,
         dependencies,
-        doNothing: (..._: any[]) => ({})
+        doNothing: (..._: any[]) => {}
     });
 
     console.log({ taskList });
