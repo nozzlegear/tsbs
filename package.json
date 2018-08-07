@@ -33,7 +33,7 @@
         "transform": {
             "^.+\\.tsx?$": "ts-jest"
         },
-        "testRegex": "tests/.*\\.tests?\\.(t|j)sx?$",
+        "testRegex": "tests/.*\\.spec\\.(t|j)sx?$",
         "moduleFileExtensions": [
             "ts",
             "tsx",
