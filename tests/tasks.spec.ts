@@ -10,7 +10,18 @@ test("Task builder calls the configuration function", () => {
     expect(configFunction).toBeCalled();
 });
 
-test.skip("Adds tasks without dependencies to the final task list", () => {});
+test("Adds tasks without dependencies to the final task list", () => {
+    const deps = dependencies([["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"], ["NoDeps"]]);
+
+    expect(deps).toEqual([
+        { name: "Clean", dependsOn: [] },
+        { name: "Restore", dependsOn: ["Clean"] },
+        { name: "Build:Server", dependsOn: ["Restore"] },
+        { name: "Build:Client", dependsOn: ["Restore"] },
+        { name: "Build", dependsOn: ["Build:Server", "Build:Client"] },
+        { name: "NoDeps", dependsOn: [] }
+    ]);
+});
 
 test("Links task execution chain", () => {
     const deps = dependencies([["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"]]);
