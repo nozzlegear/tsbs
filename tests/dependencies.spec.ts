@@ -1,14 +1,8 @@
-import {
-    dependencies,
-    linkTaskExecutionChain,
-    CyclicalDependencyError
-} from "../src";
+import { dependencies, linkTaskExecutionChain, CyclicalDependencyError } from "../src";
 import { EOL } from "os";
 
 test("Calculates dependencies", () => {
-    const graph = dependencies([
-        ["Clean", ["Build:Server", "Build:Client"], "Build"]
-    ]);
+    const graph = dependencies([["Clean", ["Build:Server", "Build:Client"], "Build"]]);
 
     expect(graph).toHaveLength(4);
 
@@ -72,10 +66,7 @@ test("Calculates multiple dependency groups", () => {
 });
 
 test("Calculates dependencies that start with a soft dependency group", () => {
-    const graph = dependencies([
-        [["Restore:Client", "Restore:Server"], "Restore"],
-        [["Restore", "Clean"], "Build"]
-    ]);
+    const graph = dependencies([[["Restore:Client", "Restore:Server"], "Restore"], [["Restore", "Clean"], "Build"]]);
 
     expect(graph).toHaveLength(5);
 
@@ -149,11 +140,7 @@ test("Reassigns dependencies", () => {
 test("Cyclical dependencies should throw an error", () => {
     // TSBS does not support cyclical dependencies. Build cannot depend on Clean which depends on Build.
     // An error should be thrown.
-    const err = new CyclicalDependencyError("Clean", [
-        "Clean",
-        "Build",
-        "Clean"
-    ]);
+    const err = new CyclicalDependencyError("Clean", ["Clean", "Build", "Clean"]);
 
     expect(() => {
         dependencies([["Clean", "Build", "Clean"]]);
@@ -161,26 +148,17 @@ test("Cyclical dependencies should throw an error", () => {
 });
 
 test("CyclicalDependencyError formats its message correctly", () => {
-    const err = new CyclicalDependencyError("Clean", [
-        "Clean",
-        "Restore",
-        "Clean"
-    ]);
+    const err = new CyclicalDependencyError("Clean", ["Clean", "Restore", "Clean"]);
     const expectedMessage = `Cyclical dependency detected: task "Clean" depends on itself.${EOL +
         EOL}Clean${EOL}  <== Restore${EOL}  <== Clean`;
 
     expect(err.message).toEqual(expectedMessage);
     expect(err.report()).toEqual(expectedMessage);
-    expect(
-        CyclicalDependencyError.report(err.cyclicalTaskName, err.taskNames)
-    ).toEqual(expectedMessage);
+    expect(CyclicalDependencyError.report(err.cyclicalTaskName, err.taskNames)).toEqual(expectedMessage);
 });
 
 test("Should not throw a CyclicalDependencyError when adding a task twice just to add dependencies to it", () => {
     expect(() => {
-        dependencies([
-            ["Clean", ["Build:Server", "Build:Client"], ["Build", "All"]],
-            ["Build", "Publish"]
-        ]);
+        dependencies([["Clean", ["Build:Server", "Build:Client"], ["Build", "All"]], ["Build", "Publish"]]);
     }).not.toThrow();
 });
