@@ -19,7 +19,7 @@
         "jest": "~22",
         "prettier": "1.13.7",
         "ts-jest": "~22",
-        "typescript": "^2.9.2"
+        "typescript": "3.0.1"
     },
     "dependencies": {},
     "files": [
