@@ -11,7 +11,7 @@ test("Task builder calls the configuration function", () => {
 });
 
 test("Adds tasks without dependencies to the final task list", () => {
-    const deps = dependencies([["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"], ["NoDeps"]]);
+    const deps = dependencies(["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"], ["NoDeps"]);
 
     expect(deps).toEqual([
         { name: "Clean", dependsOn: [] },
@@ -24,7 +24,7 @@ test("Adds tasks without dependencies to the final task list", () => {
 });
 
 test("Links task execution chain", () => {
-    const deps = dependencies([["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"]]);
+    const deps = dependencies(["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"]);
     const linked = linkTaskExecutionChain("Build", deps);
 
     expect(linked).toEqual({
@@ -63,7 +63,7 @@ test("Links task execution chain", () => {
 });
 
 test("Links task execution chain when input task does not match casing", () => {
-    const deps = dependencies([["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"]]);
+    const deps = dependencies(["Clean", "Restore", ["Build:Server", "Build:Client"], "Build"]);
     const linked = linkTaskExecutionChain("build", deps);
 
     expect(linked).toEqual({
@@ -168,9 +168,7 @@ test.skip("Executes an entire task chain with groups before the task itself", ()
         builder.create("Restore:Server", restoreServerTask);
         builder.create("Build", buildTask);
 
-        return builder.dependencies([
-            ["Clean", "Before Restore:Client", ["Restore:Client", "Restore:Server"], "Build"]
-        ]);
+        return builder.dependencies(["Clean", "Before Restore:Client", ["Restore:Client", "Restore:Server"], "Build"]);
     });
 
     expect(() => run("build")).not.toThrow();

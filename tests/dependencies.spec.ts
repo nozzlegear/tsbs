@@ -2,8 +2,7 @@ import { dependencies, linkTaskExecutionChain, CyclicalDependencyError } from ".
 import { EOL } from "os";
 
 test("Calculates dependencies", () => {
-    const graph = dependencies([["Clean", ["Build:Server", "Build:Client"], "Build"]]);
-
+    const graph = dependencies(["Clean", ["Build:Server", "Build:Client"], "Build"]);
     expect(graph).toHaveLength(4);
 
     graph.forEach(task => {
@@ -39,7 +38,7 @@ test("Calculates multiple dependency groups", () => {
     // This is just a way for the user to specify that this task is the parent task of another, although technically
     // they should have put the next dependent task in the first group (unless the parent task was in a soft dependency group,
     // in which case it makes sense to specify in another array :)
-    const graph = dependencies([["Clean", "Build"], ["Build", "Publish"]]);
+    const graph = dependencies(["Clean", "Build"], ["Build", "Publish"]);
 
     expect(graph).toHaveLength(3);
 
@@ -66,7 +65,7 @@ test("Calculates multiple dependency groups", () => {
 });
 
 test("Calculates dependencies that start with a soft dependency group", () => {
-    const graph = dependencies([[["Restore:Client", "Restore:Server"], "Restore"], [["Restore", "Clean"], "Build"]]);
+    const graph = dependencies([["Restore:Client", "Restore:Server"], "Restore"], [["Restore", "Clean"], "Build"]);
 
     expect(graph).toHaveLength(5);
 
@@ -103,7 +102,7 @@ test("Calculates dependencies that start with a soft dependency group", () => {
 });
 
 test("Reassigns dependencies", () => {
-    const graph = dependencies([
+    const graph = dependencies(
         ["Clean", "Build"],
         [
             // Reassigning a task will clear its previous dependencies, as we have no idea where the
@@ -112,7 +111,7 @@ test("Reassigns dependencies", () => {
             "Restore",
             "Build"
         ]
-    ]);
+    );
 
     expect(graph).toHaveLength(3);
 
@@ -143,7 +142,7 @@ test("Cyclical dependencies should throw an error", () => {
     const err = new CyclicalDependencyError("Clean", ["Clean", "Build", "Clean"]);
 
     expect(() => {
-        dependencies([["Clean", "Build", "Clean"]]);
+        dependencies(["Clean", "Build", "Clean"]);
     }).toThrowError(err);
 });
 
@@ -159,6 +158,10 @@ test("CyclicalDependencyError formats its message correctly", () => {
 
 test("Should not throw a CyclicalDependencyError when adding a task twice just to add dependencies to it", () => {
     expect(() => {
-        dependencies([["Clean", ["Build:Server", "Build:Client"], ["Build", "All"]], ["Build", "Publish"]]);
+        dependencies(["Clean", ["Build:Server", "Build:Client"], ["Build", "All"]], ["Build", "Publish"]);
     }).not.toThrow();
+});
+
+test("Should throw a cyclical dependency when multiple groups are involved", () => {
+    expect(() => dependencies(["Test"], ["Test", "Build", "Test"])).toThrow();
 });
