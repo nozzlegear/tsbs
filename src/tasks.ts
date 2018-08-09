@@ -24,16 +24,12 @@ export interface TaskBuilder {
 
 export type RunFunction = (defaultTaskName: string) => void;
 
-export function taskBuilder(
-    configure: (builder: TaskBuilder) => Task[]
-): RunFunction {
+export function taskBuilder(configure: (builder: TaskBuilder) => Task[]): RunFunction {
     const taskList = configure({
         create: createTask,
         dependencies,
         doNothing: (..._: any[]) => {}
     });
-
-    console.log({ taskList });
 
     // TODO: any tasks created with builder.create(taskName) that *doesn't* have dependencies should
     // be added to the task list as a task with no dependencies.
@@ -51,17 +47,12 @@ export interface LinkedTask {
 /**
  * Determines the execution order of tasks, starting with the given task name, and returns a linked list of tasks.
  */
-export function linkTaskExecutionChain(
-    taskName: string,
-    list: Task[]
-): LinkedTask {
+export function linkTaskExecutionChain(taskName: string, list: Task[]): LinkedTask {
     // Find the task matching the task name
-    const findResult = tryFind(task => task.name === taskName, list);
+    const findResult = tryFind(task => task.name.toUpperCase() === taskName.toUpperCase(), list);
 
     if (Option.isNone(findResult)) {
-        throw new Error(
-            `Task ${taskName} does not appear in the list of task dependencies.`
-        );
+        throw new Error(`Task ${taskName} does not appear in the list of task dependencies.`);
     }
 
     findCyclicalDependencies(list);
@@ -70,8 +61,6 @@ export function linkTaskExecutionChain(
 
     return {
         name: task.name,
-        next: task.dependsOn.map(nextTaskName =>
-            linkTaskExecutionChain(nextTaskName, list)
-        )
+        next: task.dependsOn.map(nextTaskName => linkTaskExecutionChain(nextTaskName, list))
     };
 }
